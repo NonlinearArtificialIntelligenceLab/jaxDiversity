@@ -96,9 +96,7 @@ baselineNN, opt_state ,inner_results = inner_opt(model =model,
                                             config = dev_inner_config, training=True, verbose=True)
 ```
 
-``` python
-#### metalearing with Hamiltonian Neural Networks
-```
+#### metalearning with Hamiltonian Neural Networks
 
 ``` python
 inner_config = InnerConfig(test_train_split=0.8,
@@ -131,8 +129,6 @@ meta_opt = optax.rmsprop(learning_rate=outer_config.lr, momentum=outer_config.mu
 
 HNN_acts, HNN_stats = outer_opt(train_dataloader, test_dataloader,compute_loss_hnn ,inner_config, outer_config, opt, meta_opt, save_path=None)
 ```
-
-      0%|          | 0/2 [00:00<?, ?it/s]
 
 Link to older pytorch codebase with classification problem:
 [DiversityNN](https://github.com/NonlinearArtificialIntelligenceLab/DiversityNN)
