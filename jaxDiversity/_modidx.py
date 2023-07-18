@@ -43,4 +43,12 @@ d = { 'settings': { 'branch': 'main',
                                           'jaxDiversity.dataloading.SwingingSticksDataset.__len__': ( 'dataloading.html#swingingsticksdataset.__len__',
                                                                                                       'jaxDiversity/dataloading.py'),
                                           'jaxDiversity.dataloading.numpy_collate': ( 'dataloading.html#numpy_collate',
-                                                                                      'jaxDiversity/dataloading.py')}}}
+                                                                                      'jaxDiversity/dataloading.py')},
+            'jaxDiversity.utilclasses': { 'jaxDiversity.utilclasses.InnerConfig': ( 'utilclasses.html#innerconfig',
+                                                                                    'jaxDiversity/utilclasses.py'),
+                                          'jaxDiversity.utilclasses.InnerResults': ( 'utilclasses.html#innerresults',
+                                                                                     'jaxDiversity/utilclasses.py'),
+                                          'jaxDiversity.utilclasses.OuterConfig': ( 'utilclasses.html#outerconfig',
+                                                                                    'jaxDiversity/utilclasses.py'),
+                                          'jaxDiversity.utilclasses.OuterResults': ( 'utilclasses.html#outerresults',
+                                                                                     'jaxDiversity/utilclasses.py')}}}
