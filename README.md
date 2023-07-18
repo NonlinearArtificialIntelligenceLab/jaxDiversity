@@ -55,9 +55,18 @@ jax.
 import jax
 import optax
 
-from jaxDiversity.utilclasses import InnerConfig, OuterConfig # simple utility classes for configuration consistency
+from jaxDiversity.utilclasses import (
+    InnerConfig,
+    OuterConfig,
+)  # simple utility classes for configuration consistency
 from jaxDiversity.dataloading import NumpyLoader, DummyDataset
-from jaxDiversity.mlp import mlp_afunc, MultiActMLP, init_linear_weight, xavier_normal_init, save
+from jaxDiversity.mlp import (
+    mlp_afunc,
+    MultiActMLP,
+    init_linear_weight,
+    xavier_normal_init,
+    save,
+)
 from jaxDiversity.baseline import compute_loss as compute_loss_baseline
 from jaxDiversity.hnn import compute_loss as compute_loss_hnn
 from jaxDiversity.loops import inner_opt, outer_opt
@@ -66,68 +75,111 @@ from jaxDiversity.loops import inner_opt, outer_opt
 #### inner optimzation or standard training loop with the baseline activation
 
 ``` python
-dev_inner_config = InnerConfig(test_train_split=0.8,
-                            input_dim=2,
-                            output_dim=2,
-                            hidden_layer_sizes=[18],
-                            batch_size=64,
-                            epochs=2,
-                            lr=1e-3,
-                            mu=0.9,
-                            n_fns=2,
-                            l2_reg=1e-1,
-                            seed=42)
+dev_inner_config = InnerConfig(
+    test_train_split=0.8,
+    input_dim=2,
+    output_dim=2,
+    hidden_layer_sizes=[18],
+    batch_size=64,
+    epochs=2,
+    lr=1e-3,
+    mu=0.9,
+    n_fns=2,
+    l2_reg=1e-1,
+    seed=42,
+)
 key = jax.random.PRNGKey(dev_inner_config.seed)
 model_key, init_key = jax.random.split(key)
 afuncs = [lambda x: x**2, lambda x: x]
-train_dataset = DummyDataset(1000, dev_inner_config.input_dim, dev_inner_config.output_dim)
-test_dataset = DummyDataset(1000, dev_inner_config.input_dim, dev_inner_config.output_dim)
-train_dataloader = NumpyLoader(train_dataset, batch_size=dev_inner_config.batch_size, shuffle=True)
-test_dataloader = NumpyLoader(test_dataset, batch_size=dev_inner_config.batch_size, shuffle=True)
+train_dataset = DummyDataset(
+    1000, dev_inner_config.input_dim, dev_inner_config.output_dim
+)
+test_dataset = DummyDataset(
+    1000, dev_inner_config.input_dim, dev_inner_config.output_dim
+)
+train_dataloader = NumpyLoader(
+    train_dataset, batch_size=dev_inner_config.batch_size, shuffle=True
+)
+test_dataloader = NumpyLoader(
+    test_dataset, batch_size=dev_inner_config.batch_size, shuffle=True
+)
 
-opt = optax.rmsprop(learning_rate=dev_inner_config.lr, momentum=dev_inner_config.mu, decay=dev_inner_config.l2_reg)
-model = MultiActMLP(dev_inner_config.input_dim, dev_inner_config.output_dim, dev_inner_config.hidden_layer_sizes, model_key, bias=False)
-baselineNN, opt_state ,inner_results = inner_opt(model =model, 
-                                            train_data =train_dataloader,
-                                            test_data = test_dataloader,
-                                            afuncs = afuncs, 
-                                            opt = opt, 
-                                            loss_fn=compute_loss_baseline,
-                                            config = dev_inner_config, training=True, verbose=True)
+opt = optax.rmsprop(
+    learning_rate=dev_inner_config.lr,
+    momentum=dev_inner_config.mu,
+    decay=dev_inner_config.l2_reg,
+)
+model = MultiActMLP(
+    dev_inner_config.input_dim,
+    dev_inner_config.output_dim,
+    dev_inner_config.hidden_layer_sizes,
+    model_key,
+    bias=False,
+)
+baselineNN, opt_state, inner_results = inner_opt(
+    model=model,
+    train_data=train_dataloader,
+    test_data=test_dataloader,
+    afuncs=afuncs,
+    opt=opt,
+    loss_fn=compute_loss_baseline,
+    config=dev_inner_config,
+    training=True,
+    verbose=True,
+)
 ```
 
 #### metalearning with Hamiltonian Neural Networks
 
 ``` python
-inner_config = InnerConfig(test_train_split=0.8,
-                            input_dim=2,
-                            output_dim=1,
-                            hidden_layer_sizes=[32],
-                            batch_size=64,
-                            epochs=5,
-                            lr=1e-3,
-                            mu=0.9,
-                            n_fns=2,
-                            l2_reg=1e-1,
-                            seed=42)
-outer_config = OuterConfig(input_dim=1,
-                            output_dim=1,
-                            hidden_layer_sizes=[18],
-                            batch_size=1,
-                            steps=2,
-                            print_every=1,
-                            lr=1e-3,
-                            mu=0.9,
-                            seed=24)
+inner_config = InnerConfig(
+    test_train_split=0.8,
+    input_dim=2,
+    output_dim=1,
+    hidden_layer_sizes=[32],
+    batch_size=64,
+    epochs=5,
+    lr=1e-3,
+    mu=0.9,
+    n_fns=2,
+    l2_reg=1e-1,
+    seed=42,
+)
+outer_config = OuterConfig(
+    input_dim=1,
+    output_dim=1,
+    hidden_layer_sizes=[18],
+    batch_size=1,
+    steps=2,
+    print_every=1,
+    lr=1e-3,
+    mu=0.9,
+    seed=24,
+)
 train_dataset = DummyDataset(1000, inner_config.input_dim, 2)
 test_dataset = DummyDataset(1000, inner_config.input_dim, 2)
-train_dataloader = NumpyLoader(train_dataset, batch_size=inner_config.batch_size, shuffle=True)
-test_dataloader = NumpyLoader(test_dataset, batch_size=inner_config.batch_size, shuffle=True)
+train_dataloader = NumpyLoader(
+    train_dataset, batch_size=inner_config.batch_size, shuffle=True
+)
+test_dataloader = NumpyLoader(
+    test_dataset, batch_size=inner_config.batch_size, shuffle=True
+)
 
-opt = optax.rmsprop(learning_rate=inner_config.lr, momentum=inner_config.mu, decay=inner_config.l2_reg)
+opt = optax.rmsprop(
+    learning_rate=inner_config.lr, momentum=inner_config.mu, decay=inner_config.l2_reg
+)
 meta_opt = optax.rmsprop(learning_rate=outer_config.lr, momentum=outer_config.mu)
 
-HNN_acts, HNN_stats = outer_opt(train_dataloader, test_dataloader,compute_loss_hnn ,inner_config, outer_config, opt, meta_opt, save_path=None)
+HNN_acts, HNN_stats = outer_opt(
+    train_dataloader,
+    test_dataloader,
+    compute_loss_hnn,
+    inner_config,
+    outer_config,
+    opt,
+    meta_opt,
+    save_path=None,
+)
 ```
 
 Link to older pytorch codebase with classification problem:

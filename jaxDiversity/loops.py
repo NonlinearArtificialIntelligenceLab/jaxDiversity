@@ -17,14 +17,23 @@ from functools import partial
 import json
 from dataclasses import asdict
 
-
 # %% ../nbs/06_Loops.ipynb 5
 from .dataloading import NumpyLoader, DummyDataset
-from .utilclasses import InnerConfig, OuterConfig, InnerResults, OuterResults
-from .mlp import mlp_afunc, MultiActMLP, init_linear_weight, xavier_normal_init, save
+from jaxDiversity.utilclasses import (
+    InnerConfig,
+    OuterConfig,
+    InnerResults,
+    OuterResults,
+)
+from jaxDiversity.mlp import (
+    mlp_afunc,
+    MultiActMLP,
+    init_linear_weight,
+    xavier_normal_init,
+    save,
+)
 from .baseline import compute_loss as compute_loss_baseline
 from .hnn import compute_loss as compute_loss_hnn
-
 
 # %% ../nbs/06_Loops.ipynb 7
 @eqx.filter_jit
@@ -35,7 +44,17 @@ def make_step(model, x, y, afuncs, optim, opt_state, compute_loss):
     return loss, grads, model, opt_state
 
 # %% ../nbs/06_Loops.ipynb 8
-def inner_opt(model, train_data, test_data, afuncs, opt, loss_fn, config, training=False, verbose=False):
+def inner_opt(
+    model,
+    train_data,
+    test_data,
+    afuncs,
+    opt,
+    loss_fn,
+    config,
+    training=False,
+    verbose=False,
+):
     """
     inner optimization loop
     """
@@ -46,41 +65,62 @@ def inner_opt(model, train_data, test_data, afuncs, opt, loss_fn, config, traini
     opt_state = opt.init(model)
     for epoch in range(config.epochs):
         if training:
-            for x,y in train_data:
-                loss, grads, model, opt_state = make_step(model, x, y, afuncs, opt, opt_state, loss_fn)
+            for x, y in train_data:
+                loss, grads, model, opt_state = make_step(
+                    model, x, y, afuncs, opt, opt_state, loss_fn
+                )
                 train_loss.append(loss)
                 grad_norm_tree = jax.tree_map(lambda x: jnp.linalg.norm(x), grads)
                 grad_norm_scalar = jax.tree_util.tree_reduce(jnp.add, grad_norm_tree)
                 grad_norm.append(grad_norm_scalar)
-        
-        for x,y in test_data:
+
+        for x, y in test_data:
             x = jax.lax.stop_gradient(x)
             y = jax.lax.stop_gradient(y)
             loss, _ = loss_fn(model, x, y, afuncs)
             test_loss.append(loss)
         if verbose:
-            logging.info(f"Epoch {epoch :03d} | Train Loss: {train_loss[-1] :.4e} | Test Loss: {test_loss[-1]:.4e} | Grad Norm: {grad_norm[-1]:.4e}")
+            logging.info(
+                f"Epoch {epoch :03d} | Train Loss: {train_loss[-1] :.4e} | Test Loss: {test_loss[-1]:.4e} | Grad Norm: {grad_norm[-1]:.4e}"
+            )
 
-    return model, opt_state, InnerResults(jnp.array(train_loss), jnp.array(test_loss), jnp.array(grad_norm))
+    return (
+        model,
+        opt_state,
+        InnerResults(jnp.array(train_loss), jnp.array(test_loss), jnp.array(grad_norm)),
+    )
 
 # %% ../nbs/06_Loops.ipynb 11
 @eqx.filter_value_and_grad()
 def outer_loss(outer_models, inner_model, x, y, loss_fn, base_act):
-    inner_afuncs = [ partial(mlp_afunc, model = outer_model, base_act = base_act) for outer_model in outer_models]
+    inner_afuncs = [
+        partial(mlp_afunc, model=outer_model, base_act=base_act)
+        for outer_model in outer_models
+    ]
     loss, _ = loss_fn(inner_model, x, y, inner_afuncs)
     return loss
 
-
 # %% ../nbs/06_Loops.ipynb 12
 @eqx.filter_jit
-def outer_step(outer_models, inner_model, x, y, meta_opt, meta_opt_state, loss_fn, base_act):
+def outer_step(
+    outer_models, inner_model, x, y, meta_opt, meta_opt_state, loss_fn, base_act
+):
     loss, grads = outer_loss(outer_models, inner_model, x, y, loss_fn, base_act)
     updates, opt_state = meta_opt.update(grads, meta_opt_state)
     model = eqx.apply_updates(outer_models, updates)
     return loss, grads, model, opt_state
 
 # %% ../nbs/06_Loops.ipynb 13
-def outer_opt(train_dataloader, test_dataloader, loss_fn, inner_config, outer_config, opt, meta_opt, save_path=None):
+def outer_opt(
+    train_dataloader,
+    test_dataloader,
+    loss_fn,
+    inner_config,
+    outer_config,
+    opt,
+    meta_opt,
+    save_path=None,
+):
     """
     outer optimization loop
     """
@@ -89,22 +129,19 @@ def outer_opt(train_dataloader, test_dataloader, loss_fn, inner_config, outer_co
 
     outer_models = []
     for _ in range(inner_config.n_fns):
-        model = eqx.nn.MLP(in_size=outer_config.input_dim,
-                        out_size=outer_config.output_dim,
-                        width_size=outer_config.hidden_layer_sizes[0],
-                        depth=1,
-                        key=outer_model_key,
-                        use_bias=True)
+        model = eqx.nn.MLP(
+            in_size=outer_config.input_dim,
+            out_size=outer_config.output_dim,
+            width_size=outer_config.hidden_layer_sizes[0],
+            depth=1,
+            key=outer_model_key,
+            use_bias=True,
+        )
         outer_models.append(model)
 
     meta_opt_states = meta_opt.init(eqx.filter(outer_models, eqx.is_array))
 
-    results = {
-        "train_loss": [],
-        "test_loss": [],
-        "inner_afuncs": [],
-        "grad_norms": []
-    }
+    results = {"train_loss": [], "test_loss": [], "inner_afuncs": [], "grad_norms": []}
 
     inner_afuncs = []
 
@@ -122,28 +159,48 @@ def outer_opt(train_dataloader, test_dataloader, loss_fn, inner_config, outer_co
         with open(f"{save_path}/outer_config.json", "w") as f:
             json.dump(asdict(outer_config), f)
 
-
     for step in trange(outer_config.steps):
+        inner_afuncs = [
+            partial(mlp_afunc, model=outer_model, base_act=base_act)
+            for outer_model in outer_models
+        ]
 
-        inner_afuncs = [ partial(mlp_afunc, model = outer_model, base_act = base_act) for outer_model in outer_models]
+        inner_model = MultiActMLP(
+            inner_config.input_dim,
+            inner_config.output_dim,
+            inner_config.hidden_layer_sizes,
+            inner_model_key,
+            bias=True,
+        )
 
-        inner_model = MultiActMLP(inner_config.input_dim,
-                                    inner_config.output_dim,
-                                    inner_config.hidden_layer_sizes,
-                                    inner_model_key, bias=True)
-        
-        inner_model = init_linear_weight(inner_model, xavier_normal_init, inner_model_key)
+        inner_model = init_linear_weight(
+            inner_model, xavier_normal_init, inner_model_key
+        )
 
-        inner_model, _, inner_results = inner_opt(inner_model,
-                                    train_dataloader, test_dataloader,
-                                    inner_afuncs, opt, loss_fn,
-                                    inner_config, training=True,
-                                    verbose=False)
+        inner_model, _, inner_results = inner_opt(
+            inner_model,
+            train_dataloader,
+            test_dataloader,
+            inner_afuncs,
+            opt,
+            loss_fn,
+            inner_config,
+            training=True,
+            verbose=False,
+        )
 
-        x,y = next(iter(train_dataloader))
+        x, y = next(iter(train_dataloader))
 
-        
-        loss, grads, outer_models, meta_opt_states = outer_step(outer_models, inner_model, x, y, meta_opt, meta_opt_states, loss_fn, base_act)
+        loss, grads, outer_models, meta_opt_states = outer_step(
+            outer_models,
+            inner_model,
+            x,
+            y,
+            meta_opt,
+            meta_opt_states,
+            loss_fn,
+            base_act,
+        )
         grad_norm_tree = jax.tree_map(lambda x: jnp.linalg.norm(x), grads)
         grad_norm_scalar = jax.tree_util.tree_reduce(jnp.add, grad_norm_tree)
         results["grad_norms"].append(grad_norm_scalar)
@@ -152,7 +209,9 @@ def outer_opt(train_dataloader, test_dataloader, loss_fn, inner_config, outer_co
         results["test_loss"].append(mean_inner_test_loss)
 
         if step % outer_config.print_every == 0:
-            logging.info(f"Step {step :03d} | Train Loss: {results['train_loss'][-1] :.4e} | Test Loss: {mean_inner_test_loss :.4e} | Grad Norm: {results['grad_norms'][-1] :.4e}")
+            logging.info(
+                f"Step {step :03d} | Train Loss: {results['train_loss'][-1] :.4e} | Test Loss: {mean_inner_test_loss :.4e} | Grad Norm: {results['grad_norms'][-1] :.4e}"
+            )
 
         # sample activation functions
         x_sample = jnp.linspace(-10, 10, 100)
@@ -161,21 +220,26 @@ def outer_opt(train_dataloader, test_dataloader, loss_fn, inner_config, outer_co
             y_list.append(afunc(x_sample))
         results["inner_afuncs"].append(y_list)
 
-
-        if (step % 100 == 0 or step == outer_config.steps-1) and save_path is not None:
+        if (
+            step % 100 == 0 or step == outer_config.steps - 1
+        ) and save_path is not None:
             # pickle and save results
             with open(f"{save_path}/step_{step}.pkl", "wb") as f:
                 pickle.dump(results, f)
-            
+
             # save models
             for i, model in enumerate(outer_models):
-                save(f"{save_path}/step_{step}_activation_model_{i}.eqx", asdict(outer_config), model)
-    
-    results_obj = OuterResults(inner_test_loss= np.array(results["test_loss"]),
-                               train_loss= np.array(results["train_loss"]),
-                               inner_afuncs= np.array(results["inner_afuncs"]),
-                                 grad_norm= np.array(results["grad_norms"]))
-    
-    return outer_models, results_obj
+                save(
+                    f"{save_path}/step_{step}_activation_model_{i}.eqx",
+                    asdict(outer_config),
+                    model,
+                )
 
-        
+    results_obj = OuterResults(
+        inner_test_loss=np.array(results["test_loss"]),
+        train_loss=np.array(results["train_loss"]),
+        inner_afuncs=np.array(results["inner_afuncs"]),
+        grad_norm=np.array(results["grad_norms"]),
+    )
+
+    return outer_models, results_obj

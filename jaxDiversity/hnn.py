@@ -8,19 +8,20 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 
-
 # %% ../nbs/05_HNN.ipynb 5
 from .mlp import MultiActMLP, deterministic_init, init_linear_weight
 
 # %% ../nbs/05_HNN.ipynb 6
 def hamiltonian_factory(model, afuncs):
     """Returns a function that computes the Hamiltonian of a given model."""
-    def hamiltonian(q,p):
+
+    def hamiltonian(q, p):
         """Hamiltonian taking in q and p as 1D arrays."""
         q = q.reshape((1, -1))
         p = p.reshape((1, -1))
         x = jnp.concatenate([q, p], axis=None)
         return model(x, afuncs)[0].reshape(())
+
     return hamiltonian
 
 # %% ../nbs/05_HNN.ipynb 7
@@ -29,9 +30,9 @@ def compute_loss(model, x, y, afuncs):
     """Computes hamilton's equations to get dqdp and then computes the loss"""
     hamiltonian = hamiltonian_factory(model, afuncs)
     q, p = jnp.split(x, 2, axis=1)
-    dHdq= jax.vmap(jax.grad(hamiltonian, argnums=0))(q, p)
+    dHdq = jax.vmap(jax.grad(hamiltonian, argnums=0))(q, p)
     dHdp = jax.vmap(jax.grad(hamiltonian, argnums=1))(q, p)
-    dqdp = jnp.concatenate([dHdp, -dHdq], axis=1) # pred_y
-    loss = jnp.mean((dqdp - y)**2)
+    dqdp = jnp.concatenate([dHdp, -dHdq], axis=1)  # pred_y
+    loss = jnp.mean((dqdp - y) ** 2)
 
     return loss
