@@ -20,7 +20,8 @@ class InnerConfig:
     n_fns: int
     l2_reg: float
     seed: int
-    base_act: str = "sin"
+    base_act: str = 'sin'
+
 
 # %% ../nbs/02_UtilClasses.ipynb 5
 @dataclass
@@ -41,10 +42,10 @@ class InnerResults:
     """
     dataclass to store inner loop results
     """
-
     train_loss: list
     test_loss: list
     grad_norm: list
+
 
 # %% ../nbs/02_UtilClasses.ipynb 7
 @dataclass
@@ -52,8 +53,8 @@ class OuterResults:
     """
     dataclass to store outer loop results
     """
-
     inner_test_loss: list
     train_loss: list
     inner_afuncs: list
     grad_norm: list
+

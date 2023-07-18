@@ -8,10 +8,11 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 
+
 # %% ../nbs/04_Baseline.ipynb 6
 @eqx.filter_value_and_grad()
 def compute_loss(model, x, y, afuncs):
     """Compute the l2 loss of the model on the given data."""
-    pred_y, _ = jax.vmap(model, in_axes=(0, None))(x, afuncs)  # batched predictions
-    loss = jnp.mean((pred_y - y) ** 2)
+    pred_y, _ = jax.vmap(model, in_axes=(0, None))(x, afuncs) # batched predictions
+    loss = jnp.mean((pred_y - y)**2)
     return loss
