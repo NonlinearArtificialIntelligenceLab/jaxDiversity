@@ -8,3 +8,4 @@ website:
       - 03_MLP.ipynb
       - 04_Baseline.ipynb
       - 05_HNN.ipynb
+      - 06_Loops.ipynb
