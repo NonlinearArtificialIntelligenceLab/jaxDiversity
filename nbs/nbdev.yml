@@ -3,7 +3,7 @@ project:
 
 website:
   title: "jaxDiversity"
-  site-url: "https://NonlinearArtificialIntelligenceLab.github.io/jaxDiversity"
+  site-url: "https://NonlinearArtificialIntelligenceLabs.github.io/jaxDiversity"
   description: "jax implementation for metalearning neuronal diversity"
   repo-branch: main
   repo-url: "https://github.com/NonlinearArtificialIntelligenceLab/jaxDiversity"
