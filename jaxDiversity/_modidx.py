@@ -2,8 +2,8 @@
 
 d = { 'settings': { 'branch': 'main',
                 'doc_baseurl': '/jaxDiversity',
-                'doc_host': 'https://Anil Radhakrishnan.github.io',
-                'git_url': 'https://github.com/Anil Radhakrishnan/jaxDiversity',
+                'doc_host': 'https://NonlinearArtificialIntelligenceLabs.github.io',
+                'git_url': 'https://github.com/NonlinearArtificialIntelligenceLab/jaxDiversity',
                 'lib_path': 'jaxDiversity'},
   'syms': { 'jaxDiversity.baseline': {'jaxDiversity.baseline.compute_loss': ('baseline.html#compute_loss', 'jaxDiversity/baseline.py')},
             'jaxDiversity.core': {'jaxDiversity.core.foo': ('core.html#foo', 'jaxDiversity/core.py')},
