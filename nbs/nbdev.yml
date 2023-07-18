@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "jaxDiversity"
+  site-url: "https://Anil Radhakrishnan.github.io/jaxDiversity"
+  description: "jax implementation for metalearning neuronal diversity"
+  repo-branch: main
+  repo-url: "https://github.com/Anil Radhakrishnan/jaxDiversity"
