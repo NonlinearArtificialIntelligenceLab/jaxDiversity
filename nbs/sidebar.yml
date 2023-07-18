@@ -1,0 +1,10 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 00_core.ipynb
+      - 01_dataloading.ipynb
+      - 02_UtilClasses.ipynb
+      - 03_MLP.ipynb
+      - 04_Baseline.ipynb
+      - 05_HNN.ipynb
