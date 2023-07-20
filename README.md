@@ -37,10 +37,11 @@ pip install jaxDiversity
 
 ## How to use
 
-The codebase has 4 main components: \* dataloading: Contains tools for
-loading the datasets mentioned in the manuscript. We use pytorch
-dataloaders with a custom numpy collate function to use this data in
-jax.
+The codebase has 4 main components: 
+
+- dataloading: Contains tools for loading the datasets mentioned in
+  the manuscript. We use pytorch dataloaders with a custom numpy collate
+  function to use this data in jax.
 
 - losses: We handle both traditional mlps and hamiltonian neural
   networkss with minimal changes with our loss implementations.
