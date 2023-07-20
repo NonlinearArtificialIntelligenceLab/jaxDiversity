@@ -152,6 +152,6 @@ checklink/cookies.txt
 .quarto
 
 # specific
-*data*
+*data/*
 *figures*
 *output*
