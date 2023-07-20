@@ -112,7 +112,7 @@ def save(filename, hyperparams, model):
         f.write((hyperparam_str + "\n").encode())
         eqx.tree_serialise_leaves(f, model)
 
-# %% ../nbs/03_MLP.ipynb 11
+# %% ../nbs/03_MLP.ipynb 10
 def make_mlp(config_dict):
     """initialize MLP using hyperparameters from config_dict"""
     key = jax.random.PRNGKey(config_dict["seed"])
@@ -127,7 +127,7 @@ def make_mlp(config_dict):
     )
     return model
 
-# %% ../nbs/03_MLP.ipynb 12
+# %% ../nbs/03_MLP.ipynb 11
 def load(filename, make=make_mlp):
     """load model and hyperparameters from file"""
     with open(filename, "rb") as f:
@@ -135,7 +135,7 @@ def load(filename, make=make_mlp):
         model = make(hyperparams)
         return eqx.tree_deserialise_leaves(f, model)
 
-# %% ../nbs/03_MLP.ipynb 13
+# %% ../nbs/03_MLP.ipynb 12
 def mlp_afunc(x, model, base_act):
     """
     MLP that behaves like an activation function
